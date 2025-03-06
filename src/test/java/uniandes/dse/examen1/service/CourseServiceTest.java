@@ -1,6 +1,7 @@
 package uniandes.dse.examen1.service;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -38,10 +39,18 @@ public class CourseServiceTest {
     @Test
     void testCreateRecordMissingCourse() {
         // TODO
+        CourseEntity course = factory.manufacturePojo(CourseEntity.class);
+        course.setCourseCode(null);
+        assertThrows(IllegalOperationException.class, ())->{
+            courseService.createCourse(course);
+        };
+
     }
 
     @Test
     void testCreateRepeatedCourse() {
         // TODO
+
+
     }
 }

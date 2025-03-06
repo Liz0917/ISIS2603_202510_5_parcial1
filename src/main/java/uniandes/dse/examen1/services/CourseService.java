@@ -19,5 +19,11 @@ public class CourseService {
 
     public CourseEntity createCourse(CourseEntity newCourse) throws RepeatedCourseException {
         // TODO
+        Optional<CourseEntity> existingCourse = courseRepository.findByCourseCode(newCourse.getCourseCode());
+        if (existingCourse.isPresent()) {
+            throw new RepeatedCourseException("Ya existe un curso con ese código");
+            return courseRepository.save(newCourse)
+        }
+
     }
 }
