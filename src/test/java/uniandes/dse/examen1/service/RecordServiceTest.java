@@ -1,6 +1,10 @@
 package uniandes.dse.examen1.service;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.fail;
 
 import java.util.List;
@@ -67,8 +71,11 @@ public class RecordServiceTest {
      * Tests the normal creation of a record for a student in a course
      */
     @Test
-    void testCreateRecord() {
-        // TODO
+    void testCreateRecord() throws InvalidRecordException {
+        RecordEntity record = factory.manufacturePojo(RecordEntity.class);
+        RecordEntity createdRecord = recordService.createRecord(record, login, courseCode, 4.0, "2024-1");
+        assertNotNull(createdRecord);
+        assertEquals(4.0, createdRecord.getFinalGrade());
     }
 
     /**
@@ -76,7 +83,10 @@ public class RecordServiceTest {
      */
     @Test
     void testCreateRecordMissingStudent() {
-        // TODO
+        RecordEntity record = factory.manufacturePojo(RecordEntity.class);
+        Exception exception = assertThrows(Exception.class, () -> 
+            recordService.createRecord(record, "wrongLogin", courseCode, 4.0, "2024-1"));
+        assertTrue(exception instanceof InvalidRecordException || exception instanceof jakarta.persistence.EntityNotFoundException);
     }
 
     /**
@@ -84,7 +94,10 @@ public class RecordServiceTest {
      */
     @Test
     void testCreateInscripcionMissingCourse() {
-        // TODO
+        RecordEntity record = factory.manufacturePojo(RecordEntity.class);
+        Exception exception = assertThrows(Exception.class, () -> 
+            recordService.createRecord(record, login, "wrongCode", 4.0, "2024-1"));
+        assertTrue(exception instanceof InvalidRecordException || exception instanceof jakarta.persistence.EntityNotFoundException);
     }
 
     /**
@@ -92,7 +105,10 @@ public class RecordServiceTest {
      */
     @Test
     void testCreateInscripcionWrongGrade() {
-        // TODO
+        RecordEntity record = factory.manufacturePojo(RecordEntity.class);
+        Exception exception = assertThrows(InvalidRecordException.class, () -> 
+            recordService.createRecord(record, login, courseCode, 1.0, "2024-1"));
+        assertEquals("La nota no es válida. Debe estar entre 1.5 y 5.0", exception.getMessage());
     }
 
     /**
@@ -100,8 +116,13 @@ public class RecordServiceTest {
      * for the course
      */
     @Test
-    void testCreateInscripcionRepetida1() {
-        // TODO
+    void testCreateInscripcionRepetida1() throws InvalidRecordException {
+        RecordEntity record1 = factory.manufacturePojo(RecordEntity.class);
+        recordService.createRecord(record1, login, courseCode, 3.5, "2024-1");
+        RecordEntity record2 = factory.manufacturePojo(RecordEntity.class);
+        Exception exception = assertThrows(InvalidRecordException.class, () -> 
+            recordService.createRecord(record2, login, courseCode, 3.0, "2024-2"));
+        assertEquals("El estudiante ya aprobó este curso y no puede volver a verlo", exception.getMessage());
     }
 
     /**
@@ -109,7 +130,10 @@ public class RecordServiceTest {
      * course, but he has not passed the course yet.
      */
     @Test
-    void testCreateInscripcionRepetida2() {
-        // TODO
+    void testCreateInscripcionRepetida2() throws InvalidRecordException {
+        RecordEntity record1 = factory.manufacturePojo(RecordEntity.class);
+        recordService.createRecord(record1, login, courseCode, 2.5, "2024-1");
+        RecordEntity record2 = factory.manufacturePojo(RecordEntity.class);
+        assertDoesNotThrow(() -> recordService.createRecord(record2, login, courseCode, 2.0, "2024-2"));
     }
 }

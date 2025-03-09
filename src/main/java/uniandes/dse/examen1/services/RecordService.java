@@ -33,36 +33,49 @@ public class RecordService {
     public RecordEntity createRecord( RecordEntity recordEntity , String loginStudent, String courseCode, Double grade, String semester)
             throws InvalidRecordException {
         // TODO
-        if (loginStudent == null && courseCode == null) {
-            throw new InvalidRecordException ("El record debe tener un estudiante y un curso");
+        if (loginStudent == null || courseCode == null) {
+            throw new InvalidRecordException("El record debe tener un estudiante y un curso");
         }
-        if (loginStudent !=null ){
-            Optional<StudentEntity> student = studentRepository.findByLogin(loginStudent);
-            if (student.isEmpty()){
-                throw new EntityNotFoundException ("El estudiante no existe en la BD");
 
+        Optional<StudentEntity> studentOpt = studentRepository.findByLogin(loginStudent);
+        if (studentOpt.isEmpty()) {
+            throw new EntityNotFoundException("El estudiante no existe en la BD");
+        }
+        StudentEntity student = studentOpt.get();
+
+        Optional<CourseEntity> courseOpt = courseRepository.findByCourseCode(courseCode);
+        if (courseOpt.isEmpty()) {
+            throw new EntityNotFoundException("El curso no existe en la BD");
+        }
+        CourseEntity course = courseOpt.get();
+
+        if (grade < 1.5 || grade > 5.0) {
+            throw new InvalidRecordException("La nota no es válida. Debe estar entre 1.5 y 5.0");
+        }
+
+        for (RecordEntity record : student.getRecords()) {
+            if (record.getCourse().getId().equals(course.getId()) && record.getFinalGrade() >= 3.0) {
+                throw new InvalidRecordException("El estudiante ya aprobó este curso y no puede volver a verlo");
             }
-
-            recordEntity.setStudent(student.get());
         }
-        if (courseCode !=null ){
-            Optional<CourseEntity> course = courseRepository.findByCourseCode(courseCode);
-            if (course.isEmpty()){
-                throw new EntityNotFoundException ("El curso no existe en la BD");
 
-            }
-            recordEntity.setCourse(course.get());
+        recordEntity.setStudent(student);
+        recordEntity.setCourse(course);
+        recordEntity.setFinalGrade(grade);
+        recordEntity.setSemester(semester);
+
+        RecordEntity savedRecord = recordRepository.save(recordEntity);
+
+        if (!student.getCourses().contains(course)) {
+            student.getCourses().add(course);
         }
-        
-
-        if (grade >= 1.5 && grade <= 5.0){
-            recordEntity.setFinalGrade(grade);
+        if (!course.getStudents().contains(student)) {
+            course.getStudents().add(student);
         }
-        else throw new InvalidRecordException ("la nota no es valida");
-        
-        
 
-        return recordRepository.save(recordEntity);
+        studentRepository.save(student);
+        courseRepository.save(course);
 
+        return savedRecord;
     }
 }

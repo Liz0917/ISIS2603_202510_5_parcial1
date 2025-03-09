@@ -30,10 +30,12 @@ public class CourseServiceTest {
     private TestEntityManager entityManager;
 
     private PodamFactory factory = new PodamFactoryImpl();
+    private CourseEntity existingCourse;
 
     @BeforeEach
     void setUp() {
-
+        existingCourse = factory.manufacturePojo(CourseEntity.class);
+        entityManager.persist(existingCourse);
     }
 
     @Test
@@ -41,16 +43,19 @@ public class CourseServiceTest {
         // TODO
         CourseEntity course = factory.manufacturePojo(CourseEntity.class);
         course.setCourseCode(null);
-        assertThrows(IllegalOperationException.class, ())->{
+        assertThrows(IllegalArgumentException.class, ()->{
             courseService.createCourse(course);
-        };
+        });
 
     }
 
     @Test
     void testCreateRepeatedCourse() {
-        // TODO
+        CourseEntity duplicateCourse = factory.manufacturePojo(CourseEntity.class);
+        duplicateCourse.setCourseCode(existingCourse.getCourseCode());
 
-
-    }
+        assertThrows(RepeatedCourseException.class, () -> {
+            courseService.createCourse(duplicateCourse);
+        });
+}
 }
